@@ -28,7 +28,6 @@ class Renderer:
 
 		self.setHeader(header)
 		self.setFooter(footer)
-		self.colspan = 4        # HTML table colspan value
 		return
 
 	def setHeader (self,
@@ -116,8 +115,39 @@ class SummaryRenderer (Renderer):
 
 
 class DetailRenderer(Renderer):
+    """
+    #  Object representing the vocabulary term detail display
+    """
 
-    def printEdgePrefix(self, etype):
+    def __init__(self, header='', footer='', colspan=4):
+        """
+        #  Requires:
+	#    header: string
+	#    footer: string
+	#    colspan: integer (HTML table colspan)
+        #  Effects:
+        #    constructor
+        #  Modifies:
+	#    self.colspan
+        #  Returns:
+        #  Exceptions:
+        """
+
+	Renderer.__init__(self, header, footer)
+	self.colspan = colspan
+	return
+
+    def htmlEdgePrefix(self, etype):
+        """
+        #  Requires:
+        #    etype: string (denoting edge type)
+        #  Effects:
+        #    Abstract method for returning HTML edge prefix
+        #  Modifies:
+        #  Returns:
+	#    string of HTML
+        #  Exceptions:
+        """
 
         return ''
 
@@ -135,23 +165,62 @@ class DetailRenderer(Renderer):
 
         self.colspan = colspan
 	
-    def printSpace(self):
+    def htmlSpace(self):
+        """
+        #  Requires:
+        #  Effects:
+        #    Returns HTML for two non-breaking spaces
+        #  Modifies:
+        #  Returns:
+	#    string of HTML
+        #  Exceptions:
+        """
 
         return '&nbsp;&nbsp;'
 
-    def printPlus(self):
+    def htmlPlus(self):
+        """
+        #  Requires:
+        #  Effects:
+        #    Returns HTML for a non-breaking space and a blue '+'
+        #  Modifies:
+        #  Returns:
+	#    string of HTML
+        #  Exceptions:
+        """
 
         return '&nbsp;<FONT COLOR=blue>+</FONT>'
 
-    def printRoot(self, label):
+    def htmlRoot(self, label):
+        """
+        #  Requires:
+	#    label: string
+        #  Effects:
+        #    Returns HTML for displaying the root node
+        #  Modifies:
+        #  Returns:
+	#    string of HTML
+        #  Exceptions:
+        """
 
-        return '<TR><TD COLSPAN=4><FONT COLOR=blue>%s</FONT></TD>\n' % label
+        return '<TR><TD COLSPAN=%d><FONT COLOR=blue>%s</FONT></TD>\n' \
+	       % (self.colspan, label)
 
-    def printNode(self):
+    def htmlNode(self):
+        """
+        #  Requires:
+        #  Effects:
+        #    Abstract method that returns HTML for displaying the
+	#    selected node
+        #  Modifies:
+        #  Returns:
+	#    string of HTML
+        #  Exceptions:
+        """
 
         return ''
 
-    def printAncestors(self, path, pad):
+    def htmlAncestors(self, path, pad):
         """
         #      Private
         #
@@ -176,7 +245,7 @@ class DetailRenderer(Renderer):
                 id = str(node.getId())
                 # handle root node
                 if firstNode:
-                    doc = doc + self.printRoot(label)
+                    doc = doc + self.htmlRoot(label)
                     firstNode = 0
                     continue
 
@@ -186,13 +255,13 @@ class DetailRenderer(Renderer):
                     link = self.linkBuilder.build(node)
 
                     doc = doc + '<TR><TD COLSPAN=%d>' % self.colspan \
-                          + (depth * self.printSpace()) \
-                          + self.printEdgePrefix(etype) + link.getHTML() \
+                          + (depth * self.htmlSpace()) \
+                          + self.htmlEdgePrefix(etype) + link.getHTML() \
                           + '</TD>' + (pad * '<TD></TD>') + '</TR>\n'
 
         return doc
 
-    def printChildren(self, pad):
+    def htmlChildren(self, pad):
         """
         #      Private
         #
@@ -217,14 +286,14 @@ class DetailRenderer(Renderer):
             
             doc = doc + '<TR>' + (depth * '<TD></TD>') \
 		  + '<TD COLSPAN=%d>' % self.colspan
-            doc = doc + self.printEdgePrefix(etype) + link.getHTML()
+            doc = doc + self.htmlEdgePrefix(etype) + link.getHTML()
             if len(kids):
-                doc = doc + self.printPlus()
+                doc = doc + self.htmlPlus()
             doc = doc + '</TD>' + (pad * '<TD></TD>') + '</TR>\n'
 
         return doc
 
-    def printSibs(self, sibs, pad):
+    def htmlSibs(self, sibs, pad):
         """
         #      Private
         #
@@ -252,26 +321,36 @@ class DetailRenderer(Renderer):
             doc = doc + '<TR>' + (depth * '<TD></TD>')
             doc = doc + '<TD COLSPAN=%d>' % self.colspan
             
-            doc = doc + self.printEdgePrefix(etype)
+            doc = doc + self.htmlEdgePrefix(etype)
             if sibName == self.node.getLabel():
-                doc = doc + self.printNode()
+                doc = doc + self.htmlNode()
             else:
                 doc = doc + link.getHTML()
             if (len(kids)) and (sibName != self.node.getLabel()):
-                doc = doc + self.printPlus()
+                doc = doc + self.htmlPlus()
             doc = doc + '</TD>' + (pad * '<TD></TD>') + '</TR>\n'
 		
             if sibName == self.node.getLabel():
                 pad = pad - 1
-                doc = doc + self.printChildren(pad)
+                doc = doc + self.htmlChildren(pad)
 
         return doc
 
-    def printInfo(self):
+    def htmlInfo(self):
+        """
+        #  Requires:
+        #  Effects:
+        #    Abstract method that returns HTML for displaying attributes
+	#    of the selected node
+        #  Modifies:
+        #  Returns:
+	#    string of HTML
+        #  Exceptions:
+        """
 
-        pass
+        return ''
 
-    def printTrees(self):
+    def htmlTrees(self):
         """
         #      Private
 	#
@@ -297,18 +376,28 @@ class DetailRenderer(Renderer):
             doc = doc + '<TABLE>\n'
                 
             pad = len(path)
-            doc = doc + self.printAncestors(path, pad)
+            doc = doc + self.htmlAncestors(path, pad)
                 
             pad = pad - 1
-            doc = doc + self.printSibs(sibs, pad)
+            doc = doc + self.htmlSibs(sibs, pad)
                 
             doc = doc + '</TABLE>\n<HR>\n'
 
         return doc
     
     def printDetail(self, vocab, node):
+        """
+        #  Requires:
+	#    vocab: Vocab object
+	#    node: Node object
+        #  Effects:
+        #    Abstract method for printing the term detail display
+        #  Modifies:
+        #  Returns:
+        #  Exceptions:
+        """
 
-        pass
+        print ''
         return
 
 
