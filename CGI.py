@@ -44,8 +44,7 @@ class CGI:
 					logfilename)
 				self.logfd = None
 		self.fields = {}
-		print 'Content-type: text/html'
-		print
+		self.contentType = 'text/html'
 		return
 
 	def log (self,
@@ -116,13 +115,16 @@ class CGI:
 		#	HTML page if an error occurs
 		# Throws: nothing
 
+		print 'Content-type: %s' % self.contentType
+		print
+
 		try:
 			self.main()
 		except SystemExit:
 			pass
 		except:
 			handler()
-
+		return
 
 	def main (self):
 		# Purpose: abstract method.  Conceptually, this is the "main
@@ -133,6 +135,21 @@ class CGI:
 		# Effects: nothing
 		# Throws: nothing
 
+		return
+
+	def setContentType (self,
+		contentType		# string; 'text/html' by default
+		):
+		# Purpose: change the content type to be sent out with the
+		#	"Content-type" header.  This method must be called
+		#	before the go() method is called.
+		# Returns: nothing
+		# Assumes: nothing
+		# Effects: updates the content-type to be sent to the client
+		#	in the headers
+		# Throws: nothing
+
+		self.contentType = contentType
 		return
 
 #
