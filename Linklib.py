@@ -35,6 +35,8 @@ class Link:
             args_vals.append(arg_val)
 
         arg_string = string.join(args_vals, '&')
+        if arg_string != '':
+            arg_string = '?' + arg_string
         self.url = self.action + arg_string
 
     def getURL(self):
@@ -82,34 +84,31 @@ class LinkBuilder:
     #  Factory class for instantiating Link objects
     """
 
-    def __init__(self):
+    def __init__(self, baseURL):
         """
         #  Requires:
         #  Effects:
         #    constructor
         #  Modifies:
-        #    self.baseURL: string
-        #    self.args: dictionary (parameters for a CGI script)
+        #    self.baseURL: string (URL to CGI)
         #  Returns:
         #  Exceptions:
         """
 
-        self.baseURL = ''
-        self.args = {}
+        self.baseURL = baseURL
         
     def build(self, node):
         """
         #  Requires:
         #    node: Node object
         #  Effects:
-        #    Abstract method to build a Link object - defined in subclasses
+        #    Abstract method to build a Link object - override in subclasses
         #  Modifies:
         #  Returns:
         #  Exceptions:
         """
 
-        pass
-        return
+        return None
     
     
     
