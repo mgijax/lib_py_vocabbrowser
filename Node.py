@@ -21,6 +21,7 @@ class Node:
         
        	self.id = id
        	self.label = label
+        self.synonyms = []
 
     def getId(self):
         """
