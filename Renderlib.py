@@ -1,7 +1,7 @@
 # Name: Renderlib.py
 # Purpose: contains vocabulary browser rendering classes
 
-import string, types, db, Linklib
+import string, types, regex, regsub, db, Linklib
 
 class Renderer:
 	# Concept:
@@ -96,6 +96,33 @@ class SummaryRenderer (Renderer):
 	#	HAS:	?
 	#	DOES:	see "IS"
 	# Implementation:
+
+	def highlight (self, label, to_highlight):
+
+		# Requires: label, string
+		#           to_highlight, substring to highlight
+		# Purpose: highilights given substring with HTML bold tags,
+		#          ignores text within angle brackets
+		# Returns: s, string with <B> tags inserted
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+
+		tag = regex.compile ('\([^<]*\)\(<[^>]+>\)')
+
+		s = ''
+		highlighted = '<B>%s</B>' % to_highlight
+		start = tag.search (label)
+		end = 0
+		while start != -1:
+			s = s + regsub.gsub (to_highlight, highlighted,
+					     tag.group(1)) + tag.group(2)
+			end = tag.regs[0][1]
+			start = tag.search (label, end)
+		if end < len(label):
+			s = s + regsub.gsub (to_highlight, highlighted, \
+					     label[end:])
+		return s
 
 	def printSummary (self,
 		results,	# set of results from querying vocab
@@ -248,6 +275,14 @@ class DetailRenderer(Renderer):
                     doc = doc + self.htmlRoot(label)
                     firstNode = 0
                     continue
+
+	        # adjust spacing at greater depths
+		if (len(path) > 6) and (len(path) < 9):
+			self.setColspan(3)
+		elif (len(path) > 8) and (len(path) < 11):
+			self.setColspan(2)
+		elif len(path) > 10:
+			self.setColspan(1)
 
                 # target node will be printed among siblings
                 if id != str(self.node.getId()):
