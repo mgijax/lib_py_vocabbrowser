@@ -11,7 +11,7 @@ class Edge:
         #  Requires:
         #    parent: Node object
         #    child: Node object
-        #    etype: string (denoting type of edge)
+        #    etype: string (denoting type of edge) or None
         #  Effects:
         #    Constructor
         #  Modifies:
@@ -42,7 +42,6 @@ class DAG:
         #    self.inEdges: dictionary of Edge objects keyed by node id
         #    self.nodeByName: dictionary of nodes keyed by node label
         #    self.nodeById: dictionary of nodes keyed by node id
-        #    self.reachableNodes: list of nodes
         #  Returns:
         #  Exceptions:
         """
@@ -52,7 +51,6 @@ class DAG:
         self.inEdges = {}
        	self.nodeByName = {}
         self.nodeById = {}
-        self.reachableNodes = []
         
     def getRoot(self):
         """
@@ -92,7 +90,7 @@ class DAG:
         #  Requires:
         #    parent: Node object
         #    child: Node object
-        #    etype: string (edge type)
+        #    etype: string (edge type) or None
         #  Effects:
         #    Adds a directed edge to the graph
         #  Modifies:
@@ -196,9 +194,8 @@ class DAG:
         #  Effects:
         #    Depth-first search to find all descendents of a node
         #  Modifies:
-        #    self.reachableNodes
         #  Returns:
-        #    self.reachableNodes: list of Nodes
+        #    reachableNodes: list of tuples containing nodes and edge types
         #  Exceptions:
         """
 
@@ -211,16 +208,18 @@ class DAG:
             children = []
             for edge in self.outEdges[id]:
                 if edge.etype == etype:
-                    children.append(edge.child)
+                    children.append(edge.child, edge.etype)
 
+        reachableNodes = children[:]
         # dfs to retrieve all descendents
         for child in children:
-            id = child.getId()
-            self.reachableNodes.append(child)
+            node = child[0]
+            id = node.getId()
             if self.outEdges.has_key(id):
-                self.getNodesReachableFrom(child, etype)
+                reachableNodes = reachableNodes \
+                                 + self.getNodesReachableFrom(node, etype)
 
-        return self.reachableNodes
+        return reachableNodes
 
     def findNode(self, id):
         """
@@ -245,17 +244,15 @@ class DAG:
         #  Effects:
         #    Finds all descendents of every node in the graph
         #  Modifies:
-        #    self.reachableNodes
         #  Returns:
-        #    closure: dictionary
+        #    closure: dictionary (keys are nodes, values are lists of
+        #    tuples containing nodes and edge types)
         #  Exceptions:
         """
 
         closure = {}
         for node in self.nodes:
-            self.reachableNodes = []
             descendents = self.getNodesReachableFrom(node)
             closure[node] = descendents
-        self.reachableNodes = []
         
         return closure
