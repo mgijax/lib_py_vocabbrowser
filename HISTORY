@@ -1,0 +1,6 @@
+TAG: lib_py_vocabbrowser-1-0-5
+DATE: 10/10/2003
+STAFF: jsb
+RELEASE: alpha
+CHANGES:
+1) rewrote much of Renderlib.py to fix indenting bug
