@@ -99,6 +99,17 @@ class DAG:
         #  Exceptions:
         """
         
+        ##### added 3/29/01 - don't recreate edges! #####
+        proposedEdge = (parent, child, eType)
+        try:
+           for inEdge in self.inEdges[childId]:
+              currentEdge = (inEdge.parent, inEdge.child, inEdge.etype)
+              if proposedEdge == currentEdge:
+                return
+        except KeyError:
+           pass
+        ##### end new block #####
+
        	edge = Edge(parent, child, eType)
         parentId = parent.getId()
         childId = child.getId()
