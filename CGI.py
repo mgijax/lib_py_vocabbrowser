@@ -7,7 +7,6 @@ import os
 import cgi
 import types
 
-sys.path.append('/usr/local/mgi/lib/python')
 import errorlib
 import mgi_cgi
 
