@@ -1,7 +1,28 @@
 # Name: Renderlib.py
 # Purpose: contains vocabulary browser rendering classes
 
-import string, types, regex, regsub, Linklib
+import string, types, regex, regsub, db, Linklib
+
+###--- Constants ---###
+
+NBSP = '&nbsp;'		# non-breaking space
+NL = '\n'		# newline
+HR = '<HR>'		# HTML horizontal rule
+BR = '<BR>'		# HTML line break
+
+###--- Functions ---###
+
+def inBlue (s):
+	# Purpose: return the HTML markup needed to display the contents of
+	#	's' in blue
+	# Returns: string
+	# Assumes: nothing
+	# Effects: nothing
+	# Throws: nothing
+
+	return '<FONT COLOR="blue">%s</FONT>' % s
+
+###--- Classes ---###
 
 class Renderer:
 	# Concept:
@@ -146,12 +167,12 @@ class DetailRenderer(Renderer):
     #  Object representing the vocabulary term detail display
     """
 
-    def __init__(self, header='', footer='', colspan=4):
+    def __init__(self, header='', footer='', colspan=8):
         """
         #  Requires:
 	#    header: string
 	#    footer: string
-	#    colspan: integer (HTML table colspan)
+	#    colspan: integer (number of spaces to indent at each level)
         #  Effects:
         #    constructor
         #  Modifies:
@@ -161,7 +182,10 @@ class DetailRenderer(Renderer):
         """
 
 	Renderer.__init__(self, header, footer)
-	self.colspan = colspan
+	self.setColspan (colspan)
+
+	# depth in the tree of the most recently printed node
+	self.depth = 0
 	return
 
     def htmlEdgePrefix(self, etype):
@@ -181,16 +205,18 @@ class DetailRenderer(Renderer):
     def setColspan(self, colspan):
         """
         #  Requires:
-        #    colspan: integer - HTML table colspan value
+	#    colspan: integer (number of spaces to indent at each level)
         #  Effects:
-        #    Sets the HTML table colspan value
+        #    see Modifies
         #  Modifies:
-        #    self.colspan
+        #    self.colspan, self.indent
         #  Returns:
         #  Exceptions:
         """
 
         self.colspan = colspan
+	self.indent = NBSP * colspan
+	return
 	
     def htmlSpace(self):
         """
@@ -203,7 +229,7 @@ class DetailRenderer(Renderer):
         #  Exceptions:
         """
 
-        return '&nbsp;&nbsp;'
+        return NBSP * 2
 
     def htmlPlus(self):
         """
@@ -216,7 +242,7 @@ class DetailRenderer(Renderer):
         #  Exceptions:
         """
 
-        return '&nbsp;<FONT COLOR=blue>+</FONT>'
+        return NBSP + inBlue('+')
 
     def htmlRoot(self, label):
         """
@@ -230,8 +256,7 @@ class DetailRenderer(Renderer):
         #  Exceptions:
         """
 
-        return '<TR><TD COLSPAN=%d><FONT COLOR=blue>%s</FONT></TD>\n' \
-	       % (self.colspan, label)
+	return inBlue(label)
 
     def htmlNode(self):
         """
@@ -247,13 +272,12 @@ class DetailRenderer(Renderer):
 
         return ''
 
-    def htmlAncestors(self, path, pad):
+    def htmlAncestors(self, path):
         """
         #      Private
         #
         #  Requires:
         #    path: list of Node objects
-        #    pad: integer (number of trailing HTML table cells)
         #  Effects:
         #    Generates a string of all ancestors of a node, indented
         #    by HTML non-breaking spaces
@@ -263,8 +287,10 @@ class DetailRenderer(Renderer):
         #  Exceptions:
         """
         
-        doc = ''
+        doc = []
         firstNode = 1
+	targetNode = str(self.node.getId())
+
         if len(path) > 1:
             for ancestor in path:
                 node, etype = ancestor[0], ancestor[1]
@@ -272,69 +298,66 @@ class DetailRenderer(Renderer):
                 id = str(node.getId())
                 # handle root node
                 if firstNode:
-                    doc = doc + self.htmlRoot(label)
+                    doc.append (self.htmlRoot(label))
                     firstNode = 0
                     continue
 
-	        # adjust spacing at greater depths
-		if (len(path) > 6) and (len(path) < 9):
-			self.setColspan(3)
-		elif (len(path) > 8) and (len(path) < 11):
-			self.setColspan(2)
-		elif len(path) > 10:
-			self.setColspan(1)
-
                 # target node will be printed among siblings
-                if id != str(self.node.getId()):
-                    depth = path.index(ancestor)
+                if id != targetNode:
+                    self.depth = self.depth + 1
                     link = self.linkBuilder.build(node)
 
-                    doc = doc + '<TR><TD COLSPAN=%d>' % self.colspan \
-                          + (depth * self.htmlSpace()) \
-                          + self.htmlEdgePrefix(etype) + link.getHTML() \
-                          + '</TD>' + (pad * '<TD></TD>') + '</TR>\n'
+		    doc.append ('%s%s%s' % (
+			self.indent * self.depth,
+			self.htmlEdgePrefix(etype),
+			link.getHTML()
+		    	) )
 
-        return doc
+        return string.join(doc, BR)
 
-    def htmlChildren(self, pad):
+    def htmlChildren(self):
         """
         #      Private
         #
         #  Requires:
-        #    pad: integer (number of trailing HTML table cells)
+        #    nothing
         #  Effects:
         #    Generates an HTML string for all children of the target node
         #  Modifies:
+	#    Increments self.depth
         #  Returns:
         #    doc: string
         #  Exceptions:
         """
 
-        depth = 2
-        doc = ''
+        self.depth = self.depth + 1
+        doc = []
         for child in self.vocab.getChildrenOf(self.node):
             node, etype = child[0], child[1]
             name = node.getLabel()
             id = str(node.getId())
             kids = self.vocab.getChildrenOf(node)
             link = self.linkBuilder.build(node)
+
+	    plus = ''
+	    if len(kids):
+	    	plus = self.htmlPlus()
             
-            doc = doc + '<TR>' + (depth * '<TD></TD>') \
-		  + '<TD COLSPAN=%d>' % self.colspan
-            doc = doc + self.htmlEdgePrefix(etype) + link.getHTML()
-            if len(kids):
-                doc = doc + self.htmlPlus()
-            doc = doc + '</TD>' + (pad * '<TD></TD>') + '</TR>\n'
+	    doc.append('%s%s%s%s' % (
+		self.depth * self.indent,
+		self.htmlEdgePrefix(etype),
+		link.getHTML(),
+		plus
+	    	) )
 
-        return doc
+        return string.join(doc, BR)
 
-    def htmlSibs(self, sibs, pad):
+    def htmlSibs(self, sibs):
         """
         #      Private
         #
         #  Requires:
         #    sibs: list of Node objects
-        #    pad: integer - number of trailing HTML table cells
         #  Effects:
         #    Generates an HTML string for all siblings of and including the
         #    target node
@@ -344,32 +367,42 @@ class DetailRenderer(Renderer):
         #  Exceptions:
         """
 
-        doc = ''
+        doc = []
+        self.depth = self.depth + 1
+	targetNode = self.node.getLabel()
+
         for sib in sibs:
             node, etype = sib[0], sib[1]
             sibName = node.getLabel()
             id = str(node.getId())
             kids = self.vocab.getChildrenOf(node)
-            depth = 1
             link = self.linkBuilder.build(node)
             
-            doc = doc + '<TR>' + (depth * '<TD></TD>')
-            doc = doc + '<TD COLSPAN=%d>' % self.colspan
-            
-            doc = doc + self.htmlEdgePrefix(etype)
-            if sibName == self.node.getLabel():
-                doc = doc + self.htmlNode()
-            else:
-                doc = doc + link.getHTML()
-            if (len(kids)) and (sibName != self.node.getLabel()):
-                doc = doc + self.htmlPlus()
-            doc = doc + '</TD>' + (pad * '<TD></TD>') + '</TR>\n'
-		
-            if sibName == self.node.getLabel():
-                pad = pad - 1
-                doc = doc + self.htmlChildren(pad)
+	    label = link.getHTML()
+	    if sibName == self.node.getLabel():
+	    	label = self.htmlNode()
 
-        return doc
+	    plus = ''
+	    if len(kids) and (sibName != self.node.getLabel()):
+	    	plus = self.htmlPlus()
+            
+	    doc.append ('%s%s%s%s' % (
+	    	self.depth * self.indent,
+		self.htmlEdgePrefix(etype),
+		label,
+		plus
+		) )
+            
+            if sibName == targetNode:
+		childrenHtml = self.htmlChildren()
+		if childrenHtml:
+			doc.append (childrenHtml)
+
+		# back out to the sibling indentation level, rather than the
+		# children's level
+		self.depth = self.depth - 1
+
+        return string.join(doc, BR)
 
     def htmlInfo(self):
         """
@@ -398,7 +431,7 @@ class DetailRenderer(Renderer):
         #  Exceptions:
         """
 	
-        doc = ''
+        doc = []
 	for path in self.paths:
             sibs = []
             if len(path) > 1:
@@ -408,17 +441,12 @@ class DetailRenderer(Renderer):
             else:
                 sibs.append(path[0])
                 
-            doc = doc + '<TABLE>\n'
-                
-            pad = len(path)
-            doc = doc + self.htmlAncestors(path, pad)
-                
-            pad = pad - 1
-            doc = doc + self.htmlSibs(sibs, pad)
-                
-            doc = doc + '</TABLE>\n<HR>\n'
+	    self.depth = 0
+            doc.append (self.htmlAncestors(path))
+            doc.append (self.htmlSibs(sibs))
+	    doc.append (HR)
 
-        return doc
+        return string.join (doc, BR)
     
     def printDetail(self, vocab, node):
         """
@@ -437,20 +465,21 @@ class DetailRenderer(Renderer):
 
 #
 # Warranty Disclaimer and Copyright Notice
-# 
-#  THE JACKSON LABORATORY MAKES NO REPRESENTATION ABOUT THE SUITABILITY OR 
-#  ACCURACY OF THIS SOFTWARE OR DATA FOR ANY PURPOSE, AND MAKES NO WARRANTIES, 
-#  EITHER EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR A 
-#  PARTICULAR PURPOSE OR THAT THE USE OF THIS SOFTWARE OR DATA WILL NOT 
-#  INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS, OR OTHER RIGHTS.  
+#
+#  THE JACKSON LABORATORY MAKES NO REPRESENTATION ABOUT THE SUITABILITY OR
+#  ACCURACY OF THIS SOFTWARE OR DATA FOR ANY PURPOSE, AND MAKES NO WARRANTIES,
+#  EITHER EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR A
+#  PARTICULAR PURPOSE OR THAT THE USE OF THIS SOFTWARE OR DATA WILL NOT
+#  INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS, OR OTHER RIGHTS.
 #  THE SOFTWARE AND DATA ARE PROVIDED "AS IS".
-# 
-#  This software and data are provided to enhance knowledge and encourage 
-#  progress in the scientific community and are to be used only for research 
-#  and educational purposes.  Any reproduction or use for commercial purpose 
-#  is prohibited without the prior express written permission of the Jackson 
+#
+#  This software and data are provided to enhance knowledge and encourage
+#  progress in the scientific community and are to be used only for research
+#  and educational purposes.  Any reproduction or use for commercial purpose
+#  is prohibited without the prior express written permission of the Jackson
 #  Laboratory.
-# 
+#
 # Copyright © 1996, 1999, 2002 by The Jackson Laboratory
 # All Rights Reserved
 #
+
