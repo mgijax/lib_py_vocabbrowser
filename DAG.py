@@ -99,6 +99,9 @@ class DAG:
         #  Exceptions:
         """
         
+	parentId = parent.getId()
+	childId = child.getId()
+
         ##### added 3/29/01 - don't recreate edges! #####
         proposedEdge = (parent, child, eType)
         try:
@@ -111,8 +114,6 @@ class DAG:
         ##### end new block #####
 
        	edge = Edge(parent, child, eType)
-        parentId = parent.getId()
-        childId = child.getId()
         if self.outEdges.has_key(parentId):
             self.outEdges[parentId].append(edge)
         else:
