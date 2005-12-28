@@ -140,7 +140,7 @@ class DAG:
         if self.inEdges.has_key(id):
             edges = self.inEdges[id]
             for edge in edges:
-                parents.append(edge.parent, edge.etype)
+                parents.append( (edge.parent, edge.etype) )
         return parents
 
     def getChildrenOf(self, node):
@@ -160,7 +160,7 @@ class DAG:
         if self.outEdges.has_key(id):
             edges = self.outEdges[id]
             for edge in edges:
-                children.append(edge.child, edge.etype)
+                children.append( (edge.child, edge.etype) )
         return children
 
     def getPathsTo(self, end, start=None, path=[]):
@@ -220,7 +220,7 @@ class DAG:
             children = []
             for edge in self.outEdges[id]:
                 if edge.etype == etype:
-                    children.append(edge.child, edge.etype)
+                    children.append( (edge.child, edge.etype) )
 
         reachableNodes = children[:]
         # dfs to retrieve all descendents
