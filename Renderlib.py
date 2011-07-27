@@ -1,7 +1,7 @@
 # Name: Renderlib.py
 # Purpose: contains vocabulary browser rendering classes
 
-import string, types, regex, regsub, db, Linklib
+import string, types, regex, regsub, Linklib
 
 ###--- Constants ---###
 
