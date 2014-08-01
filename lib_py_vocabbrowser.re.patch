@@ -1,0 +1,41 @@
+diff --git a/Renderlib.py b/Renderlib.py
+index 5c61063..0c43883 100644
+--- a/Renderlib.py
++++ b/Renderlib.py
+@@ -129,21 +129,21 @@ class SummaryRenderer (Renderer):
+ 		# Effects: nothing
+ 		# Throws: nothing
+ 
+-		tag = regex.compile ('\([^<]*\)\(<[^>]+>\)')
+-
+-		s = ''
+-		highlighted = '<B>%s</B>' % to_highlight
+-		start = tag.search (label)
+-		end = 0
+-		while start != -1:
+-			s = s + regsub.gsub (to_highlight, highlighted,
+-					     tag.group(1)) + tag.group(2)
+-			end = tag.regs[0][1]
+-			start = tag.search (label, end)
+-		if end < len(label):
+-			s = s + regsub.gsub (to_highlight, highlighted, \
+-					     label[end:])
+-		return s
++                tag = re.compile ('([^<]*)(<[^>]+>)')
++
++                s = ''
++                highlighted = '<B>%s</B>' % to_highlight
++                tag_match = tag.search (label)
++                end = 0
++                while tag_match:
++                        start,end = tag_match.span()
++                        s = s + re.sub (to_highlight, highlighted,
++                                             tag_match.group(1)) + tag_match.group(2)
++                        tag_match = tag.search (label, end)
++                if end < len(label):
++                        s = s + re.sub (to_highlight, highlighted, \
++                                             label[end:])
++                return s
+ 
+ 	def printSummary (self,
+ 		results,	# set of results from querying vocab
