@@ -1,5 +1,5 @@
 diff --git a/Renderlib.py b/Renderlib.py
-index 5c61063..94b44b7 100644
+index 5c61063..f3ef21d 100644
 --- a/Renderlib.py
 +++ b/Renderlib.py
 @@ -1,7 +1,7 @@
@@ -25,12 +25,13 @@ index 5c61063..94b44b7 100644
  		end = 0
 -		while start != -1:
 -			s = s + regsub.gsub (to_highlight, highlighted,
+-					     tag.group(1)) + tag.group(2)
+-			end = tag.regs[0][1]
+-			start = tag.search (label, end)
 +		while tag_match:
 +			start,end = tag_match.span()
 +			s = s + re.sub (to_highlight, highlighted,
- 					     tag.group(1)) + tag.group(2)
--			end = tag.regs[0][1]
--			start = tag.search (label, end)
++					     tag_match.group(1)) + tag_match.group(2)
 +			tag_match = tag.search (label, end)
  		if end < len(label):
 -			s = s + regsub.gsub (to_highlight, highlighted, \
@@ -38,3 +39,48 @@ index 5c61063..94b44b7 100644
  					     label[end:])
  		return s
  
+diff --git a/lib_py_vocabbrowser.re.patch b/lib_py_vocabbrowser.re.patch
+index a4e0ed2..e69de29 100644
+--- a/lib_py_vocabbrowser.re.patch
++++ b/lib_py_vocabbrowser.re.patch
+@@ -1,40 +0,0 @@
+-diff --git a/Renderlib.py b/Renderlib.py
+-index 5c61063..94b44b7 100644
+---- a/Renderlib.py
+-+++ b/Renderlib.py
+-@@ -1,7 +1,7 @@
+- # Name: Renderlib.py
+- # Purpose: contains vocabulary browser rendering classes
+- 
+--import string, types, regex, regsub, Linklib
+-+import string, types, re, Linklib
+- 
+- ###--- Constants ---###
+- 
+-@@ -129,19 +129,19 @@ class SummaryRenderer (Renderer):
+- 		# Effects: nothing
+- 		# Throws: nothing
+- 
+--		tag = regex.compile ('\([^<]*\)\(<[^>]+>\)')
+-+		tag = re.compile ('([^<]*)(<[^>]+>)')
+- 
+- 		s = ''
+- 		highlighted = '<B>%s</B>' % to_highlight
+--		start = tag.search (label)
+-+		tag_match = tag.search (label)
+- 		end = 0
+--		while start != -1:
+--			s = s + regsub.gsub (to_highlight, highlighted,
+-+		while tag_match:
+-+			start,end = tag_match.span()
+-+			s = s + re.sub (to_highlight, highlighted,
+- 					     tag.group(1)) + tag.group(2)
+--			end = tag.regs[0][1]
+--			start = tag.search (label, end)
+-+			tag_match = tag.search (label, end)
+- 		if end < len(label):
+--			s = s + regsub.gsub (to_highlight, highlighted, \
+-+			s = s + re.sub (to_highlight, highlighted, \
+- 					     label[end:])
+- 		return s
+- 
