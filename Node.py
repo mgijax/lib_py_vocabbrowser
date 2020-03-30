@@ -19,8 +19,8 @@ class Node:
         #  Exceptions:
         """
         
-       	self.id = id
-       	self.label = label
+        self.id = id
+        self.label = label
         self.synonyms = []
 
     def getId(self):
@@ -34,7 +34,7 @@ class Node:
         #  Exceptions:
         """
         
-       	return self.id
+        return self.id
 
     def getLabel(self):
         """

@@ -20,9 +20,9 @@ class Edge:
         #  Exceptions:
         """
         
-       	self.parent = parent
-       	self.child = child
-       	self.etype = etype
+        self.parent = parent
+        self.child = child
+        self.etype = etype
 
 class DAG:
     """
@@ -46,10 +46,10 @@ class DAG:
         #  Exceptions:
         """
         
-       	self.nodes = []
-       	self.outEdges = {}
+        self.nodes = []
+        self.outEdges = {}
         self.inEdges = {}
-       	self.nodeByName = {}
+        self.nodeByName = {}
         self.nodeById = {}
         
     def getRoot(self):
@@ -63,7 +63,7 @@ class DAG:
         #  Exceptions:
         """
         
-       	return self.nodes[0]
+        return self.nodes[0]
 
     def addNode(self, node):
         """
@@ -79,10 +79,10 @@ class DAG:
 
         id = node.getId()
         name = node.getLabel()
-       	if self.nodeById.has_key(id):
-       		return
+        if id in self.nodeById:
+                return
         self.nodes.append(node)
-       	self.nodeByName[name] = node
+        self.nodeByName[name] = node
         self.nodeById[id] = node
 
     def addEdge(self, parent, child, eType = None):
@@ -99,8 +99,8 @@ class DAG:
         #  Exceptions:
         """
         
-	parentId = parent.getId()
-	childId = child.getId()
+        parentId = parent.getId()
+        childId = child.getId()
 
         ##### added 3/29/01 - don't recreate edges! #####
         proposedEdge = (parent, child, eType)
@@ -113,12 +113,12 @@ class DAG:
            pass
         ##### end new block #####
 
-       	edge = Edge(parent, child, eType)
-        if self.outEdges.has_key(parentId):
+        edge = Edge(parent, child, eType)
+        if parentId in self.outEdges:
             self.outEdges[parentId].append(edge)
         else:
             self.outEdges[parentId] = [edge]
-        if self.inEdges.has_key(childId):
+        if childId in self.inEdges:
             self.inEdges[childId].append(edge)
         else:
             self.inEdges[childId] = [edge]
@@ -137,7 +137,7 @@ class DAG:
 
         id = node.getId()
         parents = []
-        if self.inEdges.has_key(id):
+        if id in self.inEdges:
             edges = self.inEdges[id]
             for edge in edges:
                 parents.append((edge.parent, edge.etype))
@@ -157,7 +157,7 @@ class DAG:
 
         id = node.getId()
         children = []
-        if self.outEdges.has_key(id):
+        if id in self.outEdges:
             edges = self.outEdges[id]
             for edge in edges:
                 children.append((edge.child, edge.etype))
@@ -187,7 +187,7 @@ class DAG:
         if node.getId() == end.getId():
             return [path]
         id = node.getId()
-        if not self.outEdges.has_key(id):
+        if id not in self.outEdges:
             return []
         paths = []
         for edge in self.outEdges[id]:
@@ -197,7 +197,7 @@ class DAG:
                 for newpath in newpaths:
                     paths.append(newpath)
         return paths
-	
+        
     def getNodesReachableFrom(self, node, etype=None):
         """
         #  Requires:
@@ -227,7 +227,7 @@ class DAG:
         for child in children:
             node = child[0]
             id = node.getId()
-            if self.outEdges.has_key(id):
+            if id in self.outEdges:
                 reachableNodes = reachableNodes \
                                  + self.getNodesReachableFrom(node, etype)
 
@@ -245,7 +245,7 @@ class DAG:
         #  Exceptions:
         """
 
-        if self.nodeById.has_key(id):
+        if id in self.nodeById:
             return self.nodeById[id]
         else:
             return None
